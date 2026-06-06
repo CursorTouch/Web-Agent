@@ -66,17 +66,21 @@ async def scroll_tool(direction: Literal['up', 'down'] = 'down', index: int = No
         await session.scroll_element(xpath, direction, amount)
         return f'Scrolled {direction} inside element at label {index} by {amount}px'
 
+    await session.scroll_page(direction, amount)
     pos        = await session.get_scroll_position()
     scroll_y   = pos.get('scrollY', 0)
-    max_scroll = pos.get('scrollHeight', 0) - pos.get('innerHeight', 0)
-
-    if direction == 'down' and scroll_y >= max_scroll:
-        return 'Already at the bottom, cannot scroll further.'
-    if direction == 'up' and scroll_y <= 0:
-        return 'Already at the top, cannot scroll further.'
-
-    await session.scroll_page(direction, amount)
-    return f'Scrolled {direction} by {amount}px'
+    max_scroll = max(pos.get('scrollHeight', 0) - pos.get('innerHeight', 0), 0)
+    if max_scroll > 0:
+        hint = f' (position: {int(scroll_y)}/{int(max_scroll)}px'
+        if scroll_y >= max_scroll:
+            hint += ', at bottom)'
+        elif scroll_y <= 0:
+            hint += ', at top)'
+        else:
+            hint += ')'
+    else:
+        hint = ''
+    return f'Scrolled {direction} by {amount}px{hint}.'
 
 
 @Tool('goto_tool', model=GoTo)
