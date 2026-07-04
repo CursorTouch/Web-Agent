@@ -21,7 +21,7 @@ BUILTIN_TOOLS = [
     click_tool, goto_tool, key_tool, scrape_tool,
     type_tool, scroll_tool, wait_tool, back_tool,
     tab_tool, done_tool, forward_tool, download_tool,
-    script_tool,
+    script_tool, menu_tool,
 ]
 
 __all__ = ['BUILTIN_TOOLS']
