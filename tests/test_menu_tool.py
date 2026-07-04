@@ -5,11 +5,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.agent.tools import BUILTIN_TOOLS
-from src.agent.tools.service import menu_tool
+from src.agent.tools.service import menu_tool, upload_tool
 
 
 def test_menu_tool_registered():
     assert menu_tool in BUILTIN_TOOLS
+
+
+def test_upload_tool_registered():
+    assert upload_tool in BUILTIN_TOOLS
 
 
 def _stub_browser(script_result):
