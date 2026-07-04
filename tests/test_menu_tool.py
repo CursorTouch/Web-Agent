@@ -79,3 +79,15 @@ def test_menu_tool_raises_on_element_not_found():
     with pytest.raises(Exception) as exc_info:
         asyncio.run(menu_tool.ainvoke(index=7, labels=['BMW'], session=session))
     assert 'label 7' in str(exc_info.value)
+
+
+def test_select_option_at_returns_structured_result():
+    from src.agent.browser.page import Page
+    page = Page.__new__(Page)
+    page.execute_script = AsyncMock(return_value={'error': 'not_found'})
+    result = asyncio.run(page.select_option_at(10, 20, ['BMW']))
+    assert result == {'error': 'not_found'}
+    script = page.execute_script.call_args.args[0]
+    assert 'elementFromPoint(10, 20)' in script
+    assert json.dumps(['BMW']) in script
+    assert 'not_select' in script

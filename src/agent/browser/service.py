@@ -917,8 +917,8 @@ class Browser:
     async def set_file_input_at(self, x: int, y: int, files: list[str]):
         await self.current_page().set_file_input_at(x, y, files)
 
-    async def select_option_at(self, x: int, y: int, labels: list[str]):
-        await self.current_page().select_option_at(x, y, labels)
+    async def select_option_at(self, x: int, y: int, labels: list[str]) -> dict:
+        return await self.current_page().select_option_at(x, y, labels)
 
     async def set_file_input(self, xpath: str, files: list[str]):
         sid = self._get_current_session_id()

@@ -226,18 +226,28 @@ class Page:
             'files': files, 'backendNodeId': backend_node_id,
         }, session_id=sid)
 
-    async def select_option_at(self, x: int, y: int, labels: list[str]) -> None:
+    async def select_option_at(self, x: int, y: int, labels: list[str]) -> dict:
         labels_json = json.dumps(labels)
-        await self.execute_script(
+        return await self.execute_script(
             f'(function(){{'
-            f'  var el = document.elementFromPoint({x}, {y});'
+            f'  var start = document.elementFromPoint({x}, {y});'
+            f'  if (!start) return {{error: "not_found"}};'
+            f'  var el = start;'
             f'  while (el && el.tagName !== "SELECT") el = el.parentElement;'
-            f'  if (!el) return false;'
+            f'  if (!el) return {{error: "not_select", tag: start.tagName.toLowerCase()}};'
             f'  var labels = {labels_json};'
-            f'  for (var i = 0; i < el.options.length; i++) {{'
-            f'    if (labels.includes(el.options[i].text.trim())) el.options[i].selected = true;'
+            f'  var texts = Array.from(el.options).map(function(o){{ return o.text.trim(); }});'
+            f'  var selected = labels.filter(function(l){{ return texts.indexOf(l) >= 0; }});'
+            f'  var notFound = labels.filter(function(l){{ return texts.indexOf(l) < 0; }});'
+            f'  if (selected.length) {{'
+            f'    if (el.multiple) {{'
+            f'      for (var i = 0; i < el.options.length; i++) el.options[i].selected = labels.indexOf(texts[i]) >= 0;'
+            f'    }} else {{'
+            f'      el.selectedIndex = texts.indexOf(selected[0]);'
+            f'    }}'
+            f'    el.dispatchEvent(new Event("input", {{bubbles: true}}));'
+            f'    el.dispatchEvent(new Event("change", {{bubbles: true}}));'
             f'  }}'
-            f'  el.dispatchEvent(new Event("change", {{bubbles: true}}));'
-            f'  return true;'
+            f'  return {{selected: selected, notFound: notFound, available: texts.slice(0, 30)}};'
             f'}})()'
         )
