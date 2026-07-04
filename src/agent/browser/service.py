@@ -934,19 +934,28 @@ class Browser:
         backend_node_id = node['node']['backendNodeId']
         await self.send('DOM.setFileInputFiles', {'files': files, 'backendNodeId': backend_node_id}, session_id=sid)
 
-    async def select_option(self, xpath: str, labels: list[str]):
+    async def select_option(self, xpath: str, labels: list[str]) -> dict:
         escaped = xpath.replace('"', '\\"')
         labels_json = json.dumps(labels)
-        await self.execute_script(
+        return await self.execute_script(
             f'(function(){{'
             f'  var el = document.evaluate("{escaped}", document, null, 8, null).singleNodeValue;'
-            f'  if (!el) return false;'
+            f'  if (!el) return {{error: "not_found"}};'
+            f'  if (el.tagName !== "SELECT") return {{error: "not_select", tag: el.tagName.toLowerCase()}};'
             f'  var labels = {labels_json};'
-            f'  for (var i = 0; i < el.options.length; i++) {{'
-            f'    if (labels.includes(el.options[i].text.trim())) el.options[i].selected = true;'
+            f'  var texts = Array.from(el.options).map(function(o){{ return o.text.trim(); }});'
+            f'  var selected = labels.filter(function(l){{ return texts.indexOf(l) >= 0; }});'
+            f'  var notFound = labels.filter(function(l){{ return texts.indexOf(l) < 0; }});'
+            f'  if (selected.length) {{'
+            f'    if (el.multiple) {{'
+            f'      for (var i = 0; i < el.options.length; i++) el.options[i].selected = labels.indexOf(texts[i]) >= 0;'
+            f'    }} else {{'
+            f'      el.selectedIndex = texts.indexOf(selected[0]);'
+            f'    }}'
+            f'    el.dispatchEvent(new Event("input", {{bubbles: true}}));'
+            f'    el.dispatchEvent(new Event("change", {{bubbles: true}}));'
             f'  }}'
-            f'  el.dispatchEvent(new Event("change", {{bubbles: true}}));'
-            f'  return true;'
+            f'  return {{selected: selected, notFound: notFound, available: texts.slice(0, 30)}};'
             f'}})()'
         )
 
