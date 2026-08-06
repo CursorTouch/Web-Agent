@@ -135,8 +135,10 @@ async def test_close_browser_attach_does_not_terminate_process():
     browser = Browser(BrowserConfig(attach_to_existing=True))
     browser._client = MagicMock()
     browser._client.__aexit__ = AsyncMock(return_value=None)
-    browser._process = MagicMock()
+    process = MagicMock()
+    browser._process = process
 
     await browser.close_browser()
 
-    browser._process.terminate.assert_not_called()
+    process.terminate.assert_not_called()
+    process.kill.assert_not_called()

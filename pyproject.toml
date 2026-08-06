@@ -37,9 +37,13 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
     "ruff>=0.12.1",
     "ipykernel>=6.29.5",
 ]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
 requires = ["hatchling"]
