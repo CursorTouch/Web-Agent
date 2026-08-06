@@ -257,8 +257,16 @@ async def menu_tool(index: int, labels: list[str], session: Browser = None):
     '''Selects one or more options in a <select> dropdown by their visible label text.'''
     element = await session.get_element_by_index(index=index)
     xpath   = element.xpath.get('element', '')
-    await session.select_option(xpath, labels)
-    return f'Selected {", ".join(labels)} in element at label {index}'
+    result  = await session.select_option(xpath, labels)
+    if not isinstance(result, dict) or result.get('error') == 'not_found':
+        raise Exception(f'Could not resolve the dropdown element at label {index}')
+    if result.get('error') == 'not_select':
+        tag = result.get('tag', 'unknown')
+        raise Exception(f'Element at label {index} is a <{tag}>, not a <select> dropdown — use click_tool to open custom dropdowns')
+    not_found = result.get('notFound', [])
+    if not_found:
+        raise Exception(f"Could not find option(s) {not_found} in dropdown at label {index}. Available options: {result.get('available', [])}")
+    return f"Selected {', '.join(result.get('selected', []))} in element at label {index}"
 
 
 @Tool('script_tool', model=Script)
